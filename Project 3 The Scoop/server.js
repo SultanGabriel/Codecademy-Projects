@@ -50,29 +50,33 @@ function updateComment(url, request) {
   const requestComment = request.body && request.body.comment; // retrieve comment data
   const response = {};
 
+  console.log("ComID: ", requestComment.id);
   console.log("Req-Com: ", requestComment);
   console.log("DB-Com: ", database.comments[requestComment.id]);
 
-  if (requestComment.id && database.comments[requestComment.id]) {
+  if (database.comments[requestComment.id] && requestComment) {
     console.log("       -> comment existss!");
     if (
-      requestComment != undefined &&
+      requestComment &&
       requestComment.id &&
       requestComment.body &&
-      typeof requestComment.body == "string"
+      typeof requestComment.body == "string" &&
+      requestComment.body !== database.comments[requestComment.id].body
     ) {
       database.comments[requestComment.id].body = requestComment.body;
-
+      response.body = requestComment;
       response.status = 200;
     } else {
       response.status = 400;
     }
   } else {
     console.log("     -> Comment does not exist!");
+    response.body = "";
     response.status = 404;
   }
 
   console.log("RESPONSE: ", response);
+  console.log("---------------------------\n");
   return response;
 }
 
