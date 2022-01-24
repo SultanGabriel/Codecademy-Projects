@@ -44,39 +44,50 @@ const routes = {
   },
 };
 function downvoteComment(url, request) {}
+
 function upvoteComment(url, request) {}
-function deleteComment(url, request) {}
-function updateComment(url, request) {
-  const requestComment = request.body && request.body.comment; // retrieve comment data
+
+function deleteComment(url, request) {
+  const commentId = Number(url.split("/").filter((segment) => segment)[1]);
+  const savedComment = database.comments[commentId];
   const response = {};
 
-  console.log("ComID: ", requestComment.id);
-  console.log("Req-Com: ", requestComment);
-  console.log("DB-Com: ", database.comments[requestComment.id]);
+  if (savedComment) {
+    // rem comment
+    database.comments[commentId] = null;
+    // rem from autor
+    const userComments = database.users[savedComment.username].commentIds;
+    userComments.splice(userComments.indexOf(commentId), 1);
+    // rem from article
+    const articleComments =
+      database.articles[savedComment.articleId].commentIds;
+    articleComments.splice(articleComments.indexOf(commentId), 1);
 
-  if (database.comments[requestComment.id] && requestComment) {
-    console.log("       -> comment existss!");
-    if (
-      requestComment &&
-      requestComment.id &&
-      requestComment.body &&
-      typeof requestComment.body == "string" &&
-      requestComment.body !== database.comments[requestComment.id].body
-    ) {
-      database.comments[requestComment.id].body = requestComment.body;
-      response.body = requestComment;
-      response.status = 200;
-    } else {
-      response.status = 400;
-    }
+    response.status = 204;
   } else {
-    console.log("     -> Comment does not exist!");
-    response.body = "";
     response.status = 404;
   }
 
-  console.log("RESPONSE: ", response);
-  console.log("---------------------------\n");
+  return response;
+}
+
+function updateComment(url, request) {
+  const commentId = Number(url.split("/").filter((segment) => segment)[1]);
+
+  const savedComment = database.comments[commentId];
+  const requestComment = request.body && request.body.comment; // retrieve comment data
+  const response = {};
+
+  if (!requestComment || !requestComment.body) {
+    response.status = 400;
+  } else if (!savedComment) {
+    response.status = 404;
+  } else {
+    savedComment.body = requestComment.body;
+    response.body = savedComment;
+    response.status = 200;
+  }
+
   return response;
 }
 
